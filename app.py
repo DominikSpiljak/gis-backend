@@ -1,5 +1,6 @@
 import re
 import flask
+import logging
 from flask import request
 from utils.kdtree import get_kdtree
 
@@ -16,4 +17,5 @@ def closest():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     app.run(host="0.0.0.0", port=8765)

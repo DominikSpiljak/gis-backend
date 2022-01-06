@@ -1,4 +1,5 @@
 from scipy.spatial import KDTree
+from database.db_connect import connect
 import numpy as np
 
 
@@ -13,9 +14,17 @@ class KDTreeWrapper:
 
 
 def get_kdtree():
-    # test behaviour
-    # TODO: Load connectors from db, filter and load into wrapper
-    npoints = 100000000
-    points = np.random.rand(npoints, 2)
-    ids = np.arange(npoints)
+    conn = connect()
+
+    cur = conn.cursor()
+    cur.execute("SELECT gid, ST_X(geom), ST_Y(geom) FROM public.izvod")
+    result = cur.fetchall()
+    cur.close()
+
+    points = []
+    ids = []
+    for entry in result:
+        points.append([entry[1], entry[2]])
+        ids.append(entry[0])
+
     return KDTreeWrapper(points, ids)
