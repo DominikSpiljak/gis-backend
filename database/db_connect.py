@@ -21,8 +21,8 @@ def config(filename="database.ini", section="postgresql"):
     return db
 
 
-def connect():
-    params = config()
+def connect(config_file):
+    params = config(filename=config_file)
     logging.info("Connecting to database...")
     conn = psycopg2.connect(**params)
     logging.info("Connected to database")

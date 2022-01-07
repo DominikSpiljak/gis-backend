@@ -1,6 +1,5 @@
 from scipy.spatial import KDTree
 from database.db_connect import connect
-import numpy as np
 
 
 class KDTreeWrapper:
@@ -13,8 +12,8 @@ class KDTreeWrapper:
         return {"distance": float(distance), "id": int(self.__ids[index])}
 
 
-def get_kdtree():
-    conn = connect()
+def get_kdtree(config_file):
+    conn = connect(config_file)
 
     cur = conn.cursor()
     cur.execute(

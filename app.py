@@ -3,9 +3,11 @@ import flask
 import logging
 from flask import request
 from utils.kdtree import get_kdtree
+from argument_parser import parse_args
 
 app = flask.Flask(__name__)
-kd_tree = get_kdtree()
+args = parse_args()
+kd_tree = get_kdtree(args.db_ini)
 
 
 @app.route("/closest-connector", methods=["GET"])
@@ -18,4 +20,4 @@ def closest():
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    app.run(host="0.0.0.0", port=8765)
+    app.run(host=args.host, port=args.port)
