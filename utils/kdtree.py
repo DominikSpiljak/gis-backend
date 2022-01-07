@@ -16,9 +16,7 @@ def get_kdtree(config_file):
     conn = connect(config_file)
 
     cur = conn.cursor()
-    cur.execute(
-        "SELECT gid, ST_X(geom), ST_Y(geom) FROM public.izvod WHERE brparica > 0"
-    )
+    cur.execute("SELECT gid, lat, long FROM public.izvod WHERE brparica > 0")
     result = cur.fetchall()
     cur.close()
 
