@@ -3,3 +3,4 @@ scipy
 requests
 geopy
 flask
+pyproj

@@ -14,16 +14,112 @@ kd_tree = get_kdtree(database)
 georeferencer = Georeferencer()
 
 
-@app.route("/closest-connector", methods=["POST"])
+@app.route("/najblizi-izvod", methods=["POST"])
 def closest():
     json_body = flask.request.json
     return jsonify(kd_tree.query(json_body["nodes"]))
 
 
-@app.route("/georeference", methods=["POST"])
+@app.route("/georeferenciraj", methods=["POST"])
 def georeference():
     json_body = flask.request.json
     return georeferencer.georeference(json_body["addresses"])
+
+
+@app.route("/izvod", methods=["GET"])
+def izvod():
+    fields = [
+        "gid",
+        "brparica",
+        "parice",
+        "pkizvod",
+        "smjestaj",
+        "ST_X(geom)",
+        "ST_Y(geom)",
+    ]
+    result = database.query(f"SELECT {', '.join(fields)} FROM public.izvod")
+    return jsonify(
+        [
+            fields,
+            *result,
+        ]
+    )
+
+
+@app.route("/kabel", methods=["GET"])
+def kabel():
+    fields = [
+        "gid",
+        "duz",
+        "godina",
+        "tipkab",
+        "ST_AsText(geom)",
+    ]
+    result = database.query(f"SELECT {', '.join(fields)} FROM public.kabel")
+    return jsonify(
+        [
+            fields,
+            *result,
+        ]
+    )
+
+
+@app.route("/spojnica", methods=["GET"])
+def spojnica():
+    fields = [
+        "gid",
+        "nasbr",
+        "ST_X(geom)",
+        "ST_Y(geom)",
+    ]
+    result = database.query(f"SELECT {', '.join(fields)} FROM public.spojnica")
+    return jsonify(
+        [
+            fields,
+            *result,
+        ]
+    )
+
+
+@app.route("/trasa", methods=["GET"])
+def trasa():
+    fields = [
+        "gid",
+        "ST_AsText(geom)",
+    ]
+    result = database.query(f"SELECT {', '.join(fields)} FROM public.trasa")
+    return jsonify(
+        [
+            fields,
+            *result,
+        ]
+    )
+
+
+@app.route("/zdenac", methods=["GET"])
+def zdenac():
+    fields = [
+        "gid",
+        "br_zdenca",
+        "dim",
+        "godina",
+        "gr",
+        "kbr",
+        "poklopac",
+        "smjestaj",
+        "tip",
+        "tkc",
+        "zd",
+        "ST_X(geom)",
+        "ST_Y(geom)",
+    ]
+    result = database.query(f"SELECT {', '.join(fields)} FROM public.zdenac")
+    return jsonify(
+        [
+            fields,
+            *result,
+        ]
+    )
 
 
 if __name__ == "__main__":

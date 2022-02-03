@@ -5,20 +5,15 @@ from geopy import distance
 class KDTreeWrapper:
     def __init__(self, coordinates, ids):
         self.__tree = KDTree(coordinates)
-        self.__coordinates = coordinates
         self.__ids = ids
 
     def query(self, x, *args, **kwargs):
         results = []
-        _, indices = self.__tree.query(x, *args, **kwargs)
-        for i, x_ in enumerate(x):
+        distances, indices = self.__tree.query(x, *args, **kwargs)
+        for i in range(len(x)):
             results.append(
                 {
-                    "distance": distance.geodesic(
-                        tuple(x_),
-                        tuple(self.__coordinates[int(indices[i])]),
-                        ellipsoid="GRS-80",
-                    ).meters,
+                    "distance": float(distances[i]),
                     "connector_gid": self.__ids[int(indices[i])],
                 }
             )
@@ -28,7 +23,7 @@ class KDTreeWrapper:
 def get_kdtree(database):
 
     result = database.query(
-        "SELECT gid, lat, long FROM public.izvod WHERE brparica > 0"
+        "SELECT gid, ST_X(geom), ST_Y(geom) FROM public.izvod WHERE brparica > 0"
     )
 
     points = []
