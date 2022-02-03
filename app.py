@@ -1,21 +1,29 @@
 import re
 import flask
 import logging
-from flask import request
+from flask import jsonify
+from database.database import Database
 from utils.kdtree import get_kdtree
+from utils.georeferencer import Georeferencer
 from argument_parser import parse_args
 
 app = flask.Flask(__name__)
 args = parse_args()
-kd_tree = get_kdtree(args.db_ini)
+database = Database(args.db_ini)
+kd_tree = get_kdtree(database)
+georeferencer = Georeferencer()
 
 
-@app.route("/closest-connector", methods=["GET"])
+@app.route("/closest-connector", methods=["POST"])
 def closest():
-    x = request.args.get("x")
-    y = request.args.get("y")
+    json_body = flask.request.json
+    return jsonify(kd_tree.query(json_body["nodes"]))
 
-    return kd_tree.query([x, y])
+
+@app.route("/georeference", methods=["POST"])
+def georeference():
+    json_body = flask.request.json
+    return georeferencer.georeference(json_body["addresses"])
 
 
 if __name__ == "__main__":

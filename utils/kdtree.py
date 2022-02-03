@@ -1,24 +1,35 @@
 from scipy.spatial import KDTree
-from database.db_connect import connect
+from geopy import distance
 
 
 class KDTreeWrapper:
     def __init__(self, coordinates, ids):
         self.__tree = KDTree(coordinates)
+        self.__coordinates = coordinates
         self.__ids = ids
 
-    def query(self, *args, **kwargs):
-        distance, index = self.__tree.query(*args, **kwargs)
-        return {"distance": float(distance), "id": int(self.__ids[index])}
+    def query(self, x, *args, **kwargs):
+        results = []
+        _, indices = self.__tree.query(x, *args, **kwargs)
+        for i, x_ in enumerate(x):
+            results.append(
+                {
+                    "distance": distance.geodesic(
+                        tuple(x_),
+                        tuple(self.__coordinates[int(indices[i])]),
+                        ellipsoid="GRS-80",
+                    ).meters,
+                    "connector_gid": self.__ids[int(indices[i])],
+                }
+            )
+        return results
 
 
-def get_kdtree(config_file):
-    conn = connect(config_file)
+def get_kdtree(database):
 
-    cur = conn.cursor()
-    cur.execute("SELECT gid, lat, long FROM public.izvod WHERE brparica > 0")
-    result = cur.fetchall()
-    cur.close()
+    result = database.query(
+        "SELECT gid, lat, long FROM public.izvod WHERE brparica > 0"
+    )
 
     points = []
     ids = []
