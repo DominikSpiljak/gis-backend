@@ -8,18 +8,13 @@ class KDTreeWrapper:
             [
                 points[point]["position"]
                 for point in points
-                if any(
-                    cables[cable] > 0
-                    for cable in cables[points[point]["parent_cables"]]
-                )
+                if any(cables[cable] > 0 for cable in points[point]["parent_cables"])
             ]
         )
         self.__ids = [
             point
             for point in points
-            if any(
-                cables[cable] > 0 for cable in cables[points[point]["parent_cables"]]
-            )
+            if any(cables[cable] > 0 for cable in points[point]["parent_cables"])
         ]
 
     def query(self, x, *args, **kwargs):
