@@ -135,6 +135,11 @@ def get_kdtree_shortie(database, crs):
                 != tuple(points[point]["position"])
             ],
         }
+    print("Cables")
+    print(cables)
+    print("Points")
+    print(points)
+    print("SP Points")
     print(sp_points)
     print(offset)
     return kdwrapper
