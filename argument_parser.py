@@ -9,5 +9,6 @@ def parse_args():
     parser.add_argument(
         "--db-ini", help="Path to database .ini file", default="database.ini"
     )
+    parser.add_argument("--crs", help="CRS used in the project", default="3857")
 
     return parser.parse_args()

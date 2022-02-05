@@ -2,16 +2,20 @@ import re
 import flask
 import logging
 from flask import jsonify
+from flask_cors import CORS
 from database.database import Database
 from utils.kdtree import get_kdtree
 from utils.georeferencer import Georeferencer
 from argument_parser import parse_args
 
 app = flask.Flask(__name__)
+cors = CORS(app)
 args = parse_args()
 database = Database(args.db_ini)
-kd_tree = get_kdtree(database)
-georeferencer = Georeferencer()
+kd_tree = get_kdtree(database, args.crs)
+georeferencer = Georeferencer(args.crs)
+
+app.config["CORS_HEADERS"] = "Content-Type"
 
 
 @app.route("/najblizi-izvod", methods=["POST"])
@@ -34,8 +38,7 @@ def izvod():
         "parice",
         "pkizvod",
         "smjestaj",
-        "ST_X(geom)",
-        "ST_Y(geom)",
+        f"ST_AsText(ST_Transform(geom, {args.crs}))",
     ]
     result = database.query(f"SELECT {', '.join(fields)} FROM public.izvod")
     return jsonify(
@@ -53,7 +56,8 @@ def kabel():
         "duz",
         "godina",
         "tipkab",
-        "ST_AsText(geom)",
+        "ukuparica",
+        f"ST_AsText(ST_Transform(geom, {args.crs}))",
     ]
     result = database.query(f"SELECT {', '.join(fields)} FROM public.kabel")
     return jsonify(
@@ -69,8 +73,7 @@ def spojnica():
     fields = [
         "gid",
         "nasbr",
-        "ST_X(geom)",
-        "ST_Y(geom)",
+        f"ST_AsText(ST_Transform(geom, {args.crs}))",
     ]
     result = database.query(f"SELECT {', '.join(fields)} FROM public.spojnica")
     return jsonify(
@@ -85,7 +88,7 @@ def spojnica():
 def trasa():
     fields = [
         "gid",
-        "ST_AsText(geom)",
+        f"ST_AsText(ST_Transform(geom, {args.crs}))",
     ]
     result = database.query(f"SELECT {', '.join(fields)} FROM public.trasa")
     return jsonify(
@@ -110,8 +113,7 @@ def zdenac():
         "tip",
         "tkc",
         "zd",
-        "ST_X(geom)",
-        "ST_Y(geom)",
+        f"ST_AsText(ST_Transform(geom, {args.crs}))",
     ]
     result = database.query(f"SELECT {', '.join(fields)} FROM public.zdenac")
     return jsonify(
@@ -124,4 +126,5 @@ def zdenac():
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
+    logging.info("Selected CRS: EPSG:%s", args.crs)
     app.run(host=args.host, port=args.port)

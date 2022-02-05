@@ -3,9 +3,9 @@ import pyproj
 
 
 class Georeferencer:
-    def __init__(self):
+    def __init__(self, crs):
         self.georeferencer = ArcGIS()
-        self.transformer = pyproj.Transformer.from_crs("EPSG:4326", "EPSG:3765")
+        self.transformer = pyproj.Transformer.from_crs("EPSG:4326", f"EPSG:{crs}")
 
     def georeference(self, addresses):
         result = {}
