@@ -4,7 +4,7 @@ import logging
 from flask import jsonify
 from flask_cors import CORS
 from database.database import Database
-from utils.kdtree import get_kdtree
+from utils.kdtree import get_kdtree_shortie
 from utils.georeferencer import Georeferencer
 from argument_parser import parse_args
 
@@ -12,7 +12,7 @@ app = flask.Flask(__name__)
 cors = CORS(app)
 args = parse_args()
 database = Database(args.db_ini)
-kd_tree = get_kdtree(database, args.crs)
+kd_tree = get_kdtree_shortie(database, args.crs)
 georeferencer = Georeferencer(args.crs)
 
 app.config["CORS_HEADERS"] = "Content-Type"
