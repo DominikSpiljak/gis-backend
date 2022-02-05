@@ -56,7 +56,7 @@ def get_kdtree_shortie(database, crs):
     points = {}
     for entry in result:
         points[int(entry[0])] = {
-            "position": [entry[1], entry[2]],
+            "position": [float(entry[1]), float(entry[2])],
             "num_parica": int(entry[3])
             if entry[3] != "null" and entry[3] is not None
             else 0,
@@ -72,12 +72,12 @@ def get_kdtree_shortie(database, crs):
 
     for entry in result:
         if int(entry[1]) in cables:
-            cables[int(entry[1])]["neighbour_points"].append(entry[0])
+            cables[int(entry[1])]["neighbour_points"].append(int(entry[0]))
         else:
             cables[int(entry[1])] = {
                 "capacity": int(entry[2]),
-                "length": entry[3],
-                "neighbour_points": [entry[0]],
+                "length": float(entry[3]),
+                "neighbour_points": [int(entry[0])],
             }
         points[int(entry[0])]["parent_cables"].append(int(entry[1]))
 
@@ -106,18 +106,18 @@ def get_kdtree_shortie(database, crs):
     for entry in result:
         # Add cable to cables if doesnt exist and add neighbour points
         if int(entry[1]) in cables:
-            cables[int(entry[1])]["neighbour_points"].append(entry[0] + offset)
+            cables[int(entry[1])]["neighbour_points"].append(int(entry[0]) + offset)
         else:
             cables[int(entry[1])] = {
                 "capacity": int(entry[5]),
-                "length": entry[4],
-                "neighbour_points": [entry[0] + offset],
+                "length": float(entry[4]),
+                "neighbour_points": [int(entry[0]) + offset],
             }
 
         # Add connector to points if doesnt exist and add parent cable
         if int(entry[0]) + offset not in points:
             points[int(entry[0]) + offset] = {
-                "position": [entry[2], entry[3]],
+                "position": [float(entry[2]), float(entry[3])],
                 "parent_cables": [],
             }
         points[int(entry[0]) + offset]["parent_cables"].append(int(entry[1]))
@@ -126,19 +126,32 @@ def get_kdtree_shortie(database, crs):
     for point in points:
         sp_points[point] = {
             "position": tuple(points[point]["position"]),
-            "neigbours": [
-                {"id": neigh_point, "cost": cables[cable]["length"], "cable": cable}
-                for neigh_point in cables[cable]["neighbour_points"]
-                for cable in points[point]["parent_cables"]
-                if cables[cable]["capacity"] > 0
-                and tuple(points[neigh_point]["position"])
-                != tuple(points[point]["position"])
-            ],
+            "neighbours": [],
         }
-    print("Cables")
-    print(cables)
-    print("Points")
-    print(points)
+        print(f"Currently adding point {point}")
+        for cable in points[point]["parent_cables"]:
+            if cables[cable]["capacity"] > 0:
+                print(
+                    f"Found cable with capacity > 0: {cable} and neighbour points {cables[cable]['neighbour_points']}"
+                )
+                for neigh_point in cables[cable]["neighbour_points"]:
+                    if tuple(points[neigh_point]["position"]) != tuple(
+                        points[point]["position"]
+                    ):
+                        print(f"Adding neighbour point {neigh_point}")
+                        sp_points[point]["neighbours"].append(
+                            {
+                                "id": neigh_point,
+                                "cost": cables[cable]["length"],
+                                "cable": cable,
+                            }
+                        )
+        print("Done with point, result: ")
+        print(sp_points[point])
+        print("================================")
+        print()
+        raise ValueError
+
     print("SP Points")
     print(sp_points)
     print(offset)
