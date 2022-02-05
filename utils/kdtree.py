@@ -8,11 +8,18 @@ class KDTreeWrapper:
             [
                 points[point]["position"]
                 for point in points
-                if cables[points[point]["parent_cable"]] > 0
+                if any(
+                    cables[cable] > 0
+                    for cable in cables[points[point]["parent_cables"]]
+                )
             ]
         )
         self.__ids = [
-            point for point in points if cables[points[point]["parent_cable"]] > 0
+            point
+            for point in points
+            if any(
+                cables[cable] > 0 for cable in cables[points[point]["parent_cables"]]
+            )
         ]
 
     def query(self, x, *args, **kwargs):
@@ -30,6 +37,7 @@ class KDTreeWrapper:
 
 def get_kdtree(database, crs):
 
+    # Points query
     result = database.query(
         f"SELECT gid, ST_X(ST_Transform(geom, {crs})), ST_Y(ST_Transform(geom, {crs})), brparica FROM public.izvod;"
     )
@@ -41,8 +49,10 @@ def get_kdtree(database, crs):
             "num_parica": int(entry[3])
             if entry[3] != "null" and entry[3] is not None
             else 0,
+            "parent_cables": [],
         }
 
+    # Parent cable query
     result = database.query(
         f"SELECT izvod.gid, kabel.gid, kabel.ukuparica FROM public.izvod AS izvod, public.kabel AS kabel WHERE ST_DWithin(izvod.geom, kabel.geom, 0.00001);"
     )
@@ -51,9 +61,18 @@ def get_kdtree(database, crs):
 
     for entry in result:
         cables[int(entry[1])] = int(entry[2])
-        points[int(entry[0])]["parent_cable"] = int(entry[1])
+        points[int(entry[0])]["parent_cables"].append(int(entry[1]))
 
     for point in points:
-        cables[points[point]["parent_cable"]] -= points[point]["num_parica"]
+        num_parica = points[point]["num_parica"]
+        for cable in points[point]["parent_cables"]:
+            if num_parica == 0:
+                break
+            elif num_parica > cables[cable]:
+                num_parica -= cables[cable]
+                cables[cable] = 0
+            else:
+                cables[cable] -= num_parica
+                break
 
     return KDTreeWrapper(points, cables)
