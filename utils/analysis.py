@@ -96,8 +96,7 @@ def get_kdtree_shortie(database, crs):
                 break
 
     kdwrapper = KDTreeWrapper(points, cables, crs)
-
-    connectors = {}
+    offset = max(list(points)) + 1
 
     # Cabel relationships
     result = database.query(
@@ -107,20 +106,35 @@ def get_kdtree_shortie(database, crs):
     for entry in result:
         # Add cable to cables if doesnt exist and add neighbour points
         if int(entry[1]) in cables:
-            cables[int(entry[1])]["neighbour_points"].append(entry[0])
+            cables[int(entry[1])]["neighbour_points"].append(entry[0] + offset)
         else:
             cables[int(entry[1])] = {
                 "capacity": int(entry[5]),
                 "length": entry[4],
-                "neighbour_points": [entry[0]],
+                "neighbour_points": [entry[0] + offset],
             }
 
-        # Add connector to connectors if doesnt exist and add parent cable
-        if int(entry[0]) not in connectors:
-            connectors[int(entry[0])] = {
+        # Add connector to points if doesnt exist and add parent cable
+        if int(entry[0]) + offset not in points:
+            points[int(entry[0]) + offset] = {
                 "position": [entry[2], entry[3]],
                 "parent_cables": [],
             }
-        connectors[int(entry[0])]["parent_cables"].append(int(entry[1]))
+        points[int(entry[0]) + offset]["parent_cables"].append(int(entry[1]))
 
+    sp_points = {}
+    for point in points:
+        sp_points[point] = {
+            "position": tuple(points[point]["position"]),
+            "neigbours": [
+                {"id": neigh_point, "cost": cables[cable]["length"], "cable": cable}
+                for neigh_point in cables[cable]["neighbour_points"]
+                for cable in points[point]["parent_cables"]
+                if cables[cable]["capacity"] > 0
+                and tuple(points[neigh_point]["position"])
+                != tuple(points[point]["position"])
+            ],
+        }
+    print(sp_points)
+    print(offset)
     return kdwrapper

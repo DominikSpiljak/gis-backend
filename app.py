@@ -4,7 +4,7 @@ import logging
 from flask import jsonify
 from flask_cors import CORS
 from database.database import Database
-from utils.kdtree import get_kdtree_shortie
+from utils.analysis import get_kdtree_shortie
 from utils.georeferencer import Georeferencer
 from argument_parser import parse_args
 
