@@ -12,16 +12,25 @@ app = flask.Flask(__name__)
 cors = CORS(app)
 args = parse_args()
 database = Database(args.db_ini)
-kd_tree = get_kdtree_shortie(database, args.crs)
+kd_tree, shortie = get_kdtree_shortie(database, args.crs)
 georeferencer = Georeferencer(args.crs)
 
 app.config["CORS_HEADERS"] = "Content-Type"
 
 
-@app.route("/najblizi-izvod", methods=["POST"])
-def closest():
+@app.route("/analiziraj", methods=["POST"])
+def analyse():
     json_body = flask.request.json
-    return jsonify(kd_tree.query(json_body["nodes"]))
+    closest_results = kd_tree.query(json_body["nodes"])
+    shortest_results = shortie.astar_search(
+        [closest_entry["connector_gid"] for closest_entry in closest_results]
+    )
+    for i in range(len(shortest_results)):
+        (
+            closest_results[i]["shortest_path"],
+            closest_results[i]["cost"],
+        ) = shortest_results[i]
+    return jsonify(closest_results)
 
 
 @app.route("/georeferenciraj", methods=["POST"])

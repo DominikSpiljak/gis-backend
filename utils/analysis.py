@@ -1,6 +1,7 @@
 from scipy.spatial import KDTree
 from geopy import distance
 import pyproj
+from astar import AStar
 
 
 class KDTreeWrapper:
@@ -42,8 +43,67 @@ class KDTreeWrapper:
         return results
 
 
-class Shortie:
-    pass
+class Shortie(AStar):
+    def __init__(self, points, crs):
+        self.points = points
+        self.final_point = 17
+        self.transformer = pyproj.transformer.Transformer.from_proj(
+            f"EPSG:{crs}", f"EPSG:4326"
+        )
+
+    def heuristic_cost_estimate(self, current, goal):
+        return distance.geodesic(
+            self.transformer.transform(*self.points[current]["position"]),
+            self.transformer.transform(*self.points[goal]["position"]),
+        ).meters
+
+    def distance_between(self, n1, n2):
+        costs = []
+        for neighbour in self.points[n1]["neighbours"]:
+            if neighbour["id"] == n2:
+                costs.append(neighbour["cost"])
+        return min(costs)
+
+    def neighbors(self, node):
+        return [neighbour["id"] for neighbour in self.points[node]["neighbours"]]
+
+    def is_goal_reached(self, current, goal):
+        return tuple(self.points[current]["position"]) == tuple(
+            self.points[goal]["position"]
+        )
+
+    def parse_cables(self, result):
+        current_node = result[0]
+        cables = []
+        cost = 0
+
+        if len(result) <= 1:
+            return []
+
+        for entry in result[1:]:
+            current_min_cost = float("inf")
+            current_best_cable = -1
+            for neighbour in self.points[current_node]["neighbours"]:
+                if neighbour["id"] == entry and neighbour["cost"] < current_min_cost:
+                    current_best_cable = neighbour["cable"]
+                    current_node = entry
+                    current_min_cost = neighbour["cost"]
+            cost += current_min_cost
+            cables.append(current_best_cable)
+
+        return cables, cost
+
+    def astar_search(self, point_ids, reversePath=False):
+        astar_results = [
+            self.astar(point_id, self.final_point, reversePath)
+            for point_id in point_ids
+        ]
+        return [
+            self.parse_cables(list(astar_result))
+            if astar_result is not None
+            else ([], None)
+            for astar_result in astar_results
+        ]
 
 
 def get_kdtree_shortie(database, crs):
@@ -128,17 +188,12 @@ def get_kdtree_shortie(database, crs):
             "position": tuple(points[point]["position"]),
             "neighbours": [],
         }
-        print(f"Currently adding point {point}")
         for cable in points[point]["parent_cables"]:
             if cables[cable]["capacity"] > 0:
-                print(
-                    f"Found cable with capacity > 0: {cable} and neighbour points {cables[cable]['neighbour_points']}"
-                )
                 for neigh_point in cables[cable]["neighbour_points"]:
                     if tuple(points[neigh_point]["position"]) != tuple(
                         points[point]["position"]
                     ):
-                        print(f"Adding neighbour point {neigh_point}")
                         sp_points[point]["neighbours"].append(
                             {
                                 "id": neigh_point,
@@ -146,13 +201,4 @@ def get_kdtree_shortie(database, crs):
                                 "cable": cable,
                             }
                         )
-        print("Done with point, result: ")
-        print(sp_points[point])
-        print("================================")
-        print()
-        raise ValueError
-
-    print("SP Points")
-    print(sp_points)
-    print(offset)
-    return kdwrapper
+    return kdwrapper, Shortie(sp_points, crs)

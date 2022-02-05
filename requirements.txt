@@ -4,4 +4,5 @@ requests
 geopy
 flask
 pyproj
+astar
 flask-cors
