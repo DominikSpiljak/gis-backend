@@ -44,7 +44,7 @@ def analyse():
             ]
             for i in range(len(shortest_results))
         ],
-        template="ST_Transform(ST_GeomFromText('POINT(%s %s)'), {args.crs}), 3765), %s, %s, %s, %s",
+        template="ST_Transform(ST_GeomFromText('POINT(%s %s)', {args.crs}), 3765), %s, %s, %s, %s",
     )
     return jsonify(closest_results)
 
