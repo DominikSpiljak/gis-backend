@@ -32,8 +32,8 @@ def analyse():
         ) = shortest_results[i]
 
     database.write_to_db(
-        f"INSERT INTO public.povijest_upita(tocka_upita,najblizi_izvod,udaljenost,najkraca_putanja,cijena) VALUES %s",
-        [
+        query=f"INSERT INTO public.povijest_upita(tocka_upita,najblizi_izvod,udaljenost,najkraca_putanja,cijena) VALUES %s",
+        data=[
             [
                 flask.request.json["nodes"][i][0],
                 flask.request.json["nodes"][i][1],
@@ -44,7 +44,7 @@ def analyse():
             ]
             for i in range(len(shortest_results))
         ],
-        "(ST_Transform(ST_GeomFromText('POINT(%s %s)'), {args.crs}), 3765)), %s, %s, %s, %s",
+        template="ST_Transform(ST_GeomFromText('POINT(%s %s)'), {args.crs}), 3765), %s, %s, %s, %s",
     )
     return jsonify(closest_results)
 
