@@ -3,7 +3,6 @@ import flask
 import logging
 from flask import jsonify
 from flask_cors import CORS
-from matplotlib.pyplot import close
 from database.database import Database
 from utils.analysis import get_kdtree_shortie
 from utils.georeferencer import Georeferencer
