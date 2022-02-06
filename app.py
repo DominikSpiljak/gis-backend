@@ -35,7 +35,8 @@ def analyse():
         f"INSERT INTO public.povijest_upita(tocka_upita,najblizi_izvod,udaljenost,najkraca_putanja,cijena) VALUES %s",
         [
             [
-                f"ST_Transform(ST_GeomFromText(POINT({' '.join(list(map(str, flask.request.json['nodes'][i])))}), {args.crs}), 3765)",
+                flask.request.json["nodes"][i][0],
+                flask.request.json["nodes"][i][1],
                 closest_results[i]["connector_gid"],
                 closest_results[i]["distance"],
                 closest_results[i]["shortest_path"],
@@ -43,6 +44,7 @@ def analyse():
             ]
             for i in range(len(shortest_results))
         ],
+        "(ST_Transform(ST_GeomFromText('POINT(%s %s)'), {args.crs}), 3765)), %s, %s, %s, %s",
     )
     return jsonify(closest_results)
 

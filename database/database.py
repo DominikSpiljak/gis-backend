@@ -40,8 +40,8 @@ class Database:
 
         return result
 
-    def write_to_db(self, query, data):
+    def write_to_db(self, query, data, template):
         cur = self.conn.cursor()
-        execute_values(cur, query, data)
+        execute_values(cur, query, data, template=template)
         self.conn.commit()
         cur.close()
