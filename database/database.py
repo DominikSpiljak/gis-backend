@@ -1,4 +1,5 @@
 import psycopg2
+from psycopg2.extras import execute_values
 import logging
 from configparser import ConfigParser
 
@@ -41,6 +42,6 @@ class Database:
 
     def write_to_db(self, query, data):
         cur = self.conn.cursor()
-        cur.execute(query, data)
+        execute_values(cur, query, data)
         self.conn.commit()
         cur.close()

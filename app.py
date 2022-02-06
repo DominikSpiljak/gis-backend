@@ -30,16 +30,20 @@ def analyse():
             closest_results[i]["shortest_path"],
             closest_results[i]["cost"],
         ) = shortest_results[i]
-        database.write_to_db(
-            f"INSERT INTO public.povijest_upita(tocka_upita,najblizi_izvod,udaljenost,najkraca_putanja,cijena) VALUES(%s)",
-            (
-                f"ST_Transform(ST_GeomFromText(POINT({' '.join(flask.request.json['nodes'][i])}), {args.crs}), 3765)",
+
+    database.write_to_db(
+        f"INSERT INTO public.povijest_upita(tocka_upita,najblizi_izvod,udaljenost,najkraca_putanja,cijena) VALUES %s",
+        [
+            [
+                f"ST_Transform(ST_GeomFromText(POINT({' '.join(list(map(str, flask.request.json['nodes'][i])))}), {args.crs}), 3765)",
                 closest_results[i]["connector_gid"],
                 closest_results[i]["distance"],
                 closest_results[i]["shortest_path"],
                 closest_results[i]["cost"],
-            ),
-        )
+            ]
+            for i in range(len(shortest_results))
+        ],
+    )
     return jsonify(closest_results)
 
 
