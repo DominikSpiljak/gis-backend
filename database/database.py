@@ -38,3 +38,9 @@ class Database:
         cur.close()
 
         return result
+
+    def write_to_db(self, query, data):
+        cur = self.conn.cursor()
+        cur.execute(query, data)
+        self.conn.commit()
+        cur.close()

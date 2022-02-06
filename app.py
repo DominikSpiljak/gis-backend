@@ -3,6 +3,7 @@ import flask
 import logging
 from flask import jsonify
 from flask_cors import CORS
+from matplotlib.pyplot import close
 from database.database import Database
 from utils.analysis import get_kdtree_shortie
 from utils.georeferencer import Georeferencer
@@ -30,6 +31,16 @@ def analyse():
             closest_results[i]["shortest_path"],
             closest_results[i]["cost"],
         ) = shortest_results[i]
+        database.write_to_db(
+            f"INSERT INTO public.povijest_upita(tocka_upita,najblizi_izvod,udaljenost,najkraca_putanja,cijena) VALUES(%s)",
+            (
+                f"ST_Transform(ST_GeomFromText(POINT({' '.join(flask.request.json['nodes'][i])}), {args.crs}), 3765)",
+                closest_results[i]["connector_gid"],
+                closest_results[i]["distance"],
+                closest_results[i]["shortest_path"],
+                closest_results[i]["cost"],
+            ),
+        )
     return jsonify(closest_results)
 
 
@@ -37,6 +48,26 @@ def analyse():
 def georeference():
     json_body = flask.request.json
     return georeferencer.georeference(json_body["addresses"])
+
+
+@app.route("/povijest", methods=["GET"])
+def history():
+    fields = [
+        "id",
+        "vrijeme_upisa",
+        f"ST_AsText(ST_Transform(tocka_upita, {args.crs}))",
+        "najblizi_izvod",
+        "udaljenost",
+        "najkraca_putanja",
+        "cijena",
+    ]
+    result = database.query(f"SELECT {', '.join(fields)} FROM public.povijest_upita")
+    return jsonify(
+        [
+            fields,
+            *result,
+        ]
+    )
 
 
 @app.route("/izvod", methods=["GET"])
