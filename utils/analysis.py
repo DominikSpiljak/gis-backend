@@ -189,16 +189,15 @@ def get_kdtree_shortie(database, crs):
             "neighbours": [],
         }
         for cable in points[point]["parent_cables"]:
-            if cables[cable]["capacity"] > 0:
-                for neigh_point in cables[cable]["neighbour_points"]:
-                    if tuple(points[neigh_point]["position"]) != tuple(
-                        points[point]["position"]
-                    ):
-                        sp_points[point]["neighbours"].append(
-                            {
-                                "id": neigh_point,
-                                "cost": cables[cable]["length"],
-                                "cable": cable,
-                            }
-                        )
+            for neigh_point in cables[cable]["neighbour_points"]:
+                if tuple(points[neigh_point]["position"]) != tuple(
+                    points[point]["position"]
+                ):
+                    sp_points[point]["neighbours"].append(
+                        {
+                            "id": neigh_point,
+                            "cost": cables[cable]["length"],
+                            "cable": cable,
+                        }
+                    )
     return kdwrapper, Shortie(sp_points, crs)
